@@ -36,7 +36,8 @@ resource "aws_route_table" "prod_route_table" {
 resource "aws_subnet" "prod_subnets" {
   count                   = 2
   vpc_id                  = aws_vpc.prod_vpc.id
-  cidr_block              = "10.0.${count.index}.0/24"
+#   cidr_block              = "10.0.${count.index}.0/24"
+  cidr_block              = cidrsubnet(aws_vpc.prod_vpc.cidr_block, 8, count.index)
   map_public_ip_on_launch = true
 
   tags = {
@@ -71,7 +72,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_https_ipv4" {
 resource "aws_vpc_security_group_ingress_rule" "allow_http_ipv4" {
   security_group_id = aws_security_group.prod_sg_allow_web.id
   cidr_ipv4         = "0.0.0.0/0"
-  from_port         = 80
+  from_port         = 8000
   ip_protocol       = "tcp"
   to_port           = 80
 }
@@ -95,7 +96,8 @@ resource "aws_instance" "web_server_instance" {
   instance_type     = "t2.micro"
 #   availability_zone = "eu-west-1a"
   key_name          = "EC2 Tutorial"
-  subnet_id = data.aws_subnets.all.ids[0]
+#   subnet_id = data.aws_subnets.all.ids[0]
+  subnet_id = aws_subnet.prod_subnets[0].id
   vpc_security_group_ids      = [aws_security_group.prod_sg_allow_web.id]
   associate_public_ip_address = true
   user_data                   = <<-EOF
@@ -113,22 +115,22 @@ resource "aws_instance" "web_server_instance" {
 }
 
 
-data "aws_vpc" "selected" {
-    tags = { Name = "prod_vpc" }
-}
+# data "aws_vpc" "selected" {
+#     tags = { Name = "prod_vpc" }
+# }
 
 
-data "aws_subnets" "all" {
-    filter {
-      name = "vpc-id"
-      values = [ data.aws_vpc.selected.id ]
-    }
+# data "aws_subnets" "all" {
+#     filter {
+#       name = "vpc-id"
+#       values = [ data.aws_vpc.selected.id ]
+#     }
 
 #     filter {
 #     name   = "tag:Name"
 #     values = ["prod_vpc"]
 #   }
-}
+# }
 
 
 # # Look up all subnets in that VPC
