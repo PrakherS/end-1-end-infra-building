@@ -74,7 +74,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_http_ipv4" {
   cidr_ipv4         = "0.0.0.0/0"
   from_port         = 8000
   ip_protocol       = "tcp"
-  to_port           = 80
+  to_port           = 8000
 }
 
 resource "aws_vpc_security_group_ingress_rule" "allow_ssh_ipv4" {
@@ -92,6 +92,7 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4" {
 }
 
 resource "aws_instance" "web_server_instance" {
+  count = 2
   ami               = "ami-09c54d172e7aa3d9a"
   instance_type     = "t2.micro"
 #   availability_zone = "eu-west-1a"
@@ -110,7 +111,7 @@ resource "aws_instance" "web_server_instance" {
                 sudo bash -c "echo your very first server > /var/www/html/index.html"
                 EOF
   tags = {
-    "Name" = "web_server"
+    Name = "Instance-${count.index + 1}"
   }
 }
 
@@ -143,14 +144,14 @@ resource "aws_instance" "web_server_instance" {
 
 
 output "server_public_ip" {
-  value = aws_instance.web_server_instance.public_ip
+  value = aws_instance.web_server_instance[*].public_ip
 }
 
 output "server_private_ip" {
-  value = aws_instance.web_server_instance.private_ip
+  value = aws_instance.web_server_instance[*].private_ip
 }
 
 output "server_id" {
-  value = aws_instance.web_server_instance.id
+  value = aws_instance.web_server_instance[*].id
 }
 
